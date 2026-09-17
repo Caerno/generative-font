@@ -5,7 +5,7 @@ No build step, no server, no framework.
 
 **Live page:** https://caerno.github.io/generative-font/
 
-![Page screenshot](media/screenshot.png)
+![Page screenshot](media/screenshot-en.png)
 
 *Русская версия — ниже.*
 
@@ -14,11 +14,13 @@ No build step, no server, no framework.
 - **Letter forms from the font itself.** Each letter gets a random form out of the alternates the font
   already contains, and the same letter never repeats its previous form.
 - **Per-letter warp.** Every outline is smoothly distorted, slightly scaled and rotated; each line gets
-  its own slope and a gentle wave. One slider ("Небрежность") controls the amount.
+  its own slope and a gentle wave. One slider (Messiness) controls the amount.
 - **Reproducible.** One seed gives one layout, so the preview and the PDF are the same.
 - **A real PDF, not a picture.** Letters are vector outlines. An invisible text layer in the same font
   sits over every line, so the PDF can be searched and copied from.
 - **Runs from disk.** Plain `<script>` tags, not modules, so `web/index.html` also works from `file://`.
+- **Russian and English interface.** The language follows the browser, the RU/EN switch remembers the
+  choice, and a link can fix it: `?lang=en` or `?lang=ru`.
 
 ## Fonts
 
@@ -44,7 +46,7 @@ License 1.1.
 | `web/fonts.js` | fonts in base64 plus a "character → glyph ids of its forms" map; generated, do not edit |
 | `web/vendor/` | pdf-lib 1.17.1 and @pdf-lib/fontkit 1.1.1, UMD builds from jsDelivr |
 | `web/licenses/` | licence texts for the fonts and libraries |
-| `web/check_page.py` | headless Firefox run: console errors, screenshots, PDF download |
+| `web/check_page.py` | headless Firefox run in both languages: console errors, screenshots, PDF download |
 | `fonts/build_web_fonts.py` | downloads the fonts, pins variable axes, collects alternates → `web/fonts.js` |
 | `fonts/font_survey.py` | Cyrillic coverage and letter forms for every `.ttf` in a folder |
 
@@ -79,7 +81,9 @@ their own licences:
 Одна статическая страница: набранный текст превращается в текст «от руки» и выгружается в PDF.
 Без сборки, сервера и фреймворков.
 
-**Страница:** https://caerno.github.io/generative-font/
+**Страница:** https://caerno.github.io/generative-font/?lang=ru
+
+![Скриншот страницы](media/screenshot-ru.png)
 
 ## Что умеет
 
@@ -91,6 +95,8 @@ their own licences:
 - **Настоящий PDF, а не картинка.** Буквы — векторные контуры. Поверх каждой строки лежит невидимый
   текст тем же шрифтом, поэтому по PDF работает поиск и копирование.
 - **Работает с диска.** Обычные `<script>`, не модули, поэтому `web/index.html` открывается и через `file://`.
+- **Русский и английский интерфейс.** Язык берётся из браузера, переключатель RU/EN запоминает выбор,
+  а в ссылке его можно задать явно: `?lang=ru` или `?lang=en`.
 
 ## Шрифты
 

@@ -12,12 +12,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "web", "fonts.js")
 GF = "https://raw.githubusercontent.com/google/fonts/main/ofl/"
 FONTS = [
-    dict(key="caveat", title="Caveat (3 формы букв)", file="Caveat[wght].ttf", url=GF + "caveat/Caveat%5Bwght%5D.ttf",
+    dict(key="caveat", title="Caveat", file="Caveat[wght].ttf", url=GF + "caveat/Caveat%5Bwght%5D.ttf",
          axes={"wght": 400}, features=["ss01", "ss02"]),
-    dict(key="shantell", title="Shantell Sans, informal (4 формы)", file="ShantellSans[BNCE,INFM,SPAC,wght].ttf",
+    dict(key="shantell", title="Shantell Sans (informal)", file="ShantellSans[BNCE,INFM,SPAC,wght].ttf",
          url=GF + "shantellsans/ShantellSans%5BBNCE%2CINFM%2CSPAC%2Cwght%5D.ttf",
          axes={"wght": 400, "INFM": 1, "BNCE": 0, "SPAC": 0}, features=["rlig"]),
-    dict(key="playpen", title="Playpen Sans (7 форм)", file="PlaypenSans[wght].ttf", url=GF + "playpensans/PlaypenSans%5Bwght%5D.ttf",
+    dict(key="playpen", title="Playpen Sans", file="PlaypenSans[wght].ttf", url=GF + "playpensans/PlaypenSans%5Bwght%5D.ttf",
          axes={"wght": 400}, features=["calt"]),
 ]
 LICENSE = "SIL Open Font License 1.1 (google/fonts)"

@@ -14,24 +14,26 @@
   output { width: 34px; text-align: right; color: #555; }
   button { padding: 8px 10px; font-size: 14px; cursor: pointer; }
   #status { color: #555; font-size: 12px; white-space: pre-line; }
+  .lang { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: -4px; }
+  .lang button { padding: 2px 8px; font-size: 12px; }
+  .lang button[aria-pressed=true] { font-weight: bold; background: #fff; }
   main { flex: 1; overflow: auto; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
   svg.page { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); width: min(100%, 794px); height: auto; flex: none; }
 </style>
 </head>
 <body>
 <aside>
-  <textarea id="text">Бабушка испекла блины. Блины были большие, белые и блестящие; бабушка ставила блины на стол, а мы брали блины руками.
-
-Съешь же ещё этих мягких французских булок, да выпей чаю.</textarea>
-  <label>Шрифт <select id="font"></select></label>
-  <label>Размер, pt <input id="size" type="range" min="10" max="40" step="1" value="20"><output></output></label>
-  <label>Интервал <input id="leading" type="range" min="1" max="2.2" step="0.05" value="1.4"><output></output></label>
-  <label>Небрежность <input id="mess" type="range" min="0" max="1" step="0.05" value="0.5"><output></output></label>
-  <label>Формы букв из шрифта <input id="alts" type="checkbox" checked></label>
-  <label>Чернила <input id="ink" type="color" value="#1b2a6b"></label>
-  <label>Зерно <input id="seed" type="number" value="1" style="width: 100px"></label>
-  <button id="reseed">Другой вариант</button>
-  <button id="pdf">Скачать PDF</button>
+  <div class="lang"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+  <textarea id="text"></textarea>
+  <label><span data-t="font">Шрифт</span> <select id="font"></select></label>
+  <label><span data-t="size">Размер, pt</span> <input id="size" type="range" min="10" max="40" step="1" value="20"><output></output></label>
+  <label><span data-t="leading">Интервал</span> <input id="leading" type="range" min="1" max="2.2" step="0.05" value="1.4"><output></output></label>
+  <label><span data-t="mess">Небрежность</span> <input id="mess" type="range" min="0" max="1" step="0.05" value="0.5"><output></output></label>
+  <label><span data-t="alts">Формы букв из шрифта</span> <input id="alts" type="checkbox" checked></label>
+  <label><span data-t="ink">Чернила</span> <input id="ink" type="color" value="#1b2a6b"></label>
+  <label><span data-t="seed">Зерно</span> <input id="seed" type="number" value="1" style="width: 100px"></label>
+  <button id="reseed" data-t="reseed">Другой вариант</button>
+  <button id="pdf" data-t="pdf">Скачать PDF</button>
   <div id="status"></div>
 </aside>
 <main id="pages"></main>
@@ -178,6 +180,61 @@ function render(o) {
   return { pages, F, o };
 }
 
+// --- язык интерфейса ---------------------------------------------------------
+const pluralRu = (n, one, few, many) =>
+  n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
+const I18N = {
+  ru: {
+    title: 'Живой почерк → PDF', font: 'Шрифт', size: 'Размер, pt', leading: 'Интервал', mess: 'Небрежность',
+    alts: 'Формы букв из шрифта', ink: 'Чернила', seed: 'Зерно', reseed: 'Другой вариант', pdf: 'Скачать PDF',
+    forms: n => `${n} ${pluralRu(n, 'форма', 'формы', 'форм')}`,
+    stats: (pages, outlines, ms) => `Страниц: ${pages}; контуров: ${outlines}; ${ms} мс`,
+    fontLine: 'Шрифт', pdfSize: kb => `PDF: ${kb} КБ`, pdfError: 'Ошибка PDF', creator: 'Живой почерк', file: 'pocherk.pdf',
+    sample: 'Бабушка испекла блины. Блины были большие, белые и блестящие; бабушка ставила блины на стол, а мы брали блины руками.\n\n' +
+      'Съешь же ещё этих мягких французских булок, да выпей чаю.',
+  },
+  en: {
+    title: 'Living handwriting → PDF', font: 'Font', size: 'Size, pt', leading: 'Line spacing', mess: 'Messiness',
+    alts: 'Letter forms from the font', ink: 'Ink', seed: 'Seed', reseed: 'Another variant', pdf: 'Download PDF',
+    forms: n => `${n} ${n === 1 ? 'form' : 'forms'}`,
+    stats: (pages, outlines, ms) => `Pages: ${pages}; outlines: ${outlines}; ${ms} ms`,
+    fontLine: 'Font', pdfSize: kb => `PDF: ${kb} KB`, pdfError: 'PDF error', creator: 'Living handwriting', file: 'handwriting.pdf',
+    sample: 'Grandma baked pancakes. The pancakes were big, pale and glossy; grandma kept putting pancakes on the table, and we took the pancakes by hand.\n\n' +
+      'The quick brown fox jumps over the lazy dog.',
+  },
+};
+function initialLang() {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (I18N[q]) return q;
+  try { const saved = localStorage.getItem('lang'); if (I18N[saved]) return saved; } catch (e) {}
+  return (navigator.languages || [navigator.language]).some(l => /^ru\b/i.test(l)) ? 'ru' : 'en';
+}
+// Сколько форм у буквы чаще всего — для подписи в списке шрифтов.
+function formsCount(f) {
+  const n = {};
+  for (const ids of Object.values(f.variants)) n[ids.length] = (n[ids.length] || 0) + 1;
+  return +Object.keys(n).sort((a, b) => n[b] - n[a])[0] || 1;
+}
+let T = null;
+function setLang(lang, remember) {
+  T = I18N[lang];
+  document.documentElement.lang = lang;
+  document.title = T.title;
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = T[el.dataset.t]);
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  for (const opt of $('font').options) opt.text = `${FONTS[opt.value].title} — ${T.forms(formsCount(FONTS[opt.value]))}`;
+  const text = $('text').value;  // свой текст не трогаем, меняем только пустой или пример
+  if (!text.trim() || Object.values(I18N).some(t => t.sample === text)) $('text').value = T.sample;
+  if (remember) {
+    try { localStorage.setItem('lang', lang); } catch (e) {}
+    try {
+      const url = new URL(location.href);
+      if (url.searchParams.has('lang')) { url.searchParams.set('lang', lang); history.replaceState(null, '', url); }
+    } catch (e) {}
+  }
+  refresh();
+}
+
 // --- интерфейс --------------------------------------------------------------
 for (const [key, f] of Object.entries(FONTS)) $('font').add(new Option(f.title, key));
 const opts = () => ({
@@ -194,8 +251,9 @@ function refresh() {
     `<svg class="page" viewBox="0 0 ${PAGE.w} ${PAGE.h}" xmlns="http://www.w3.org/2000/svg">` +
     p.lines.map(l => l.d ? `<path d="${l.d}" fill="${ink}"/>` : '').join('') + '</svg>').join('');
   const glyphs = current.pages.reduce((n, p) => n + p.lines.reduce((m, l) => m + (l.d.match(/M/g) || []).length, 0), 0);
-  $('status').textContent = `Страниц: ${current.pages.length}; контуров: ${glyphs}; ${Math.round(performance.now() - t0)} мс\n` +
-    `Шрифт: ${FONTS[current.o.font].title}, ${FONTS[current.o.font].license}`;
+  const F = FONTS[current.o.font];
+  $('status').textContent = T.stats(current.pages.length, glyphs, Math.round(performance.now() - t0)) + '\n' +
+    `${T.fontLine}: ${F.title}, ${T.forms(formsCount(F))}; ${F.license}`;
 }
 const later = () => { clearTimeout(timer); timer = setTimeout(refresh, 120); };
 document.querySelectorAll('aside input, aside select, aside textarea').forEach(el => el.addEventListener('input', later));
@@ -218,18 +276,19 @@ async function exportPdf() {
     }
   }
   doc.setTitle(o.text.trim().split('\n')[0].slice(0, 80));
-  doc.setCreator('Живой почерк (MVP)');
+  doc.setCreator(T.creator);
   const bytes = await doc.save();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  a.download = 'pocherk.pdf';
+  a.download = T.file;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-  $('status').textContent += `\nPDF: ${Math.round(bytes.length / 1024)} КБ`;
+  $('status').textContent += '\n' + T.pdfSize(Math.round(bytes.length / 1024));
 }
-$('pdf').onclick = () => exportPdf().catch(e => { $('status').textContent += '\nОшибка PDF: ' + e.message; console.error(e); });
+$('pdf').onclick = () => exportPdf().catch(e => { $('status').textContent += `\n${T.pdfError}: ${e.message}`; console.error(e); });
+document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang, true));
 
-refresh();
+setLang(initialLang());
 </script>
 </body>
 </html>

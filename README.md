@@ -3,6 +3,8 @@
 A single static page that turns typed text into handwriting-like lettering and exports it as a PDF.
 No build step, no server, no framework.
 
+**Live page:** https://caerno.github.io/generative-font/
+
 ![Page screenshot](media/screenshot.png)
 
 *Русская версия — ниже.*
@@ -63,6 +65,9 @@ python web/check_page.py /tmp/out playpen
 
 ## Licences
 
+The code in this repository is under the MIT License, see `LICENSE`. Bundled third-party parts keep
+their own licences:
+
 - Caveat, Shantell Sans, Playpen Sans: SIL Open Font License 1.1, texts in `web/licenses/`.
 - pdf-lib: MIT, text in `web/licenses/`.
 - @pdf-lib/fontkit (fork of fontkit): MIT according to its `package.json`; the fork has no licence file.
@@ -73,6 +78,8 @@ python web/check_page.py /tmp/out playpen
 
 Одна статическая страница: набранный текст превращается в текст «от руки» и выгружается в PDF.
 Без сборки, сервера и фреймворков.
+
+**Страница:** https://caerno.github.io/generative-font/
 
 ## Что умеет
 
@@ -99,4 +106,5 @@ python web/check_page.py /tmp/out playpen
 
 Все три шрифта — из [google/fonts](https://github.com/google/fonts), лицензия SIL Open Font License 1.1.
 
-Устройство, запуск и лицензии — в английской части выше.
+Код репозитория — под лицензией MIT (`LICENSE`); шрифты и библиотеки внутри — под своими лицензиями
+(OFL 1.1 и MIT, тексты в `web/licenses/`). Устройство и запуск — в английской части выше.

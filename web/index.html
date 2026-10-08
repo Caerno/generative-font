@@ -3,40 +3,60 @@
 <head>
 <meta charset="utf-8">
 <title>Живой почерк → PDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; display: flex; height: 100vh; background: #e6e6ea; color: #222; }
-  aside { width: 320px; flex: none; padding: 16px; box-sizing: border-box; background: #fafafa; border-right: 1px solid #ccc;
+  /* Палитра и шрифты — как у прототипа главной caerno.github.io (тёмная тема). */
+  :root { --bg: #121315; --bg2: #17181B; --ink: #E8E6E1; --mid: #B9B7B2; --dim: #7C7F85; --line: #26282C; --accent: #E0703A;
+          --sans: 'Geist', system-ui, sans-serif; --mono: 'Geist Mono', monospace; color-scheme: dark; }
+  body { margin: 0; font: 14px/1.4 var(--sans); display: flex; height: 100vh; background: var(--bg); color: var(--ink);
+         -webkit-font-smoothing: antialiased; }
+  aside { width: 320px; flex: none; padding: 16px; box-sizing: border-box; background: var(--bg2); border-right: 1px solid var(--line);
           overflow: auto; display: flex; flex-direction: column; gap: 10px; }
-  textarea { width: 100%; height: 220px; box-sizing: border-box; font: 14px/1.4 system-ui, sans-serif; resize: vertical; }
-  label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  input[type=range] { width: 130px; }
+  textarea { width: 100%; height: 220px; box-sizing: border-box; font: 14px/1.4 var(--sans); resize: vertical;
+             background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 2px; padding: 10px; }
+  label { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--mid); font-size: 13.5px; }
+  input[type=range] { width: 130px; accent-color: var(--accent); }
+  input[type=checkbox] { accent-color: var(--accent); }
+  select, input[type=number] { background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 2px;
+                               padding: 5px 8px; font: 13px var(--sans); }
   select { flex: 1; min-width: 0; }
-  output { width: 34px; text-align: right; color: #555; }
-  button { padding: 8px 10px; font-size: 14px; cursor: pointer; }
-  #status { color: #555; font-size: 12px; white-space: pre-line; }
+  input[type=color] { width: 44px; height: 26px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; }
+  textarea:focus, select:focus, input:focus { outline: none; border-color: var(--dim); }
+  output { width: 34px; text-align: right; color: var(--dim); font: 11.5px var(--mono); }
+  button { padding: 10px 14px; font: 500 14px var(--sans); cursor: pointer; border-radius: 2px;
+           background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button:hover { border-color: var(--dim); }
+  #pdf { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  #pdf:hover { background: #fff; }
+  #status { color: var(--dim); font: 11px/1.6 var(--mono); white-space: pre-line; }
   .lang { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: -4px; }
-  .lang button { padding: 2px 8px; font-size: 12px; }
-  .lang button[aria-pressed=true] { font-weight: bold; background: #fff; }
+  .lang button { padding: 2px 6px; font: 11px var(--mono); color: var(--dim); border: none; }
+  .lang button:hover { color: var(--mid); }
+  .lang button[aria-pressed=true] { color: var(--ink); }
   main { flex: 1; overflow: auto; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
   svg.page { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); width: min(100%, 794px); height: auto; flex: none; }
+  .rise { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+  .rise.in { opacity: 1; transform: none; }
 </style>
 </head>
 <body>
 <aside>
-  <div class="lang"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
-  <textarea id="text"></textarea>
-  <label><span data-t="font">Шрифт</span> <select id="font"></select></label>
-  <label><span data-t="size">Размер, pt</span> <input id="size" type="range" min="10" max="40" step="1" value="20"><output></output></label>
-  <label><span data-t="leading">Интервал</span> <input id="leading" type="range" min="1" max="2.2" step="0.05" value="1.4"><output></output></label>
-  <label><span data-t="mess">Небрежность</span> <input id="mess" type="range" min="0" max="1" step="0.05" value="0.5"><output></output></label>
-  <label><span data-t="alts">Формы букв из шрифта</span> <input id="alts" type="checkbox" checked></label>
-  <label><span data-t="ink">Чернила</span> <input id="ink" type="color" value="#1b2a6b"></label>
-  <label><span data-t="seed">Зерно</span> <input id="seed" type="number" value="1" style="width: 100px"></label>
-  <button id="reseed" data-t="reseed">Другой вариант</button>
-  <button id="pdf" data-t="pdf">Скачать PDF</button>
-  <div id="status"></div>
+  <div class="lang rise"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+  <textarea id="text" class="rise"></textarea>
+  <label class="rise"><span data-t="font">Шрифт</span> <select id="font"></select></label>
+  <label class="rise"><span data-t="size">Размер, pt</span> <input id="size" type="range" min="10" max="40" step="1" value="20"><output></output></label>
+  <label class="rise"><span data-t="leading">Интервал</span> <input id="leading" type="range" min="1" max="2.2" step="0.05" value="1.4"><output></output></label>
+  <label class="rise"><span data-t="mess">Небрежность</span> <input id="mess" type="range" min="0" max="1" step="0.05" value="0.5"><output></output></label>
+  <label class="rise"><span data-t="alts">Формы букв из шрифта</span> <input id="alts" type="checkbox" checked></label>
+  <label class="rise"><span data-t="ink">Чернила</span> <input id="ink" type="color" value="#1b2a6b"></label>
+  <label class="rise"><span data-t="seed">Зерно</span> <input id="seed" type="number" value="1" style="width: 100px"></label>
+  <button id="reseed" class="rise" data-t="reseed">Другой вариант</button>
+  <button id="pdf" class="rise" data-t="pdf">Скачать PDF</button>
+  <div id="status" class="rise"></div>
 </aside>
-<main id="pages"></main>
+<main id="pages" class="rise"></main>
 
 <!-- Обычные скрипты, не модули: страница открывается через file://, там модули и fetch запрещены. -->
 <script src="vendor/fontkit.umd.min.js"></script>
@@ -289,6 +309,13 @@ $('pdf').onclick = () => exportPdf().catch(e => { $('status').textContent += `\n
 document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang, true));
 
 setLang(initialLang());
+
+// Плавное появление блоков — тот же приём, что .rise на главной: класс in, когда блок доехал до экрана.
+document.querySelectorAll('aside .rise').forEach((el, i) => el.style.transitionDelay = `${i * 40}ms`);
+const io = new IntersectionObserver(es => es.forEach(en => {
+  if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+}), { threshold: 0.15 });
+document.querySelectorAll('.rise').forEach(el => io.observe(el));
 </script>
 </body>
 </html>
